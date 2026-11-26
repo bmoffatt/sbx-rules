@@ -5,8 +5,35 @@ description: Claude rules for sandboxes
 kind: mixin
 # The kit's own version: the tag this kit publishes under (alongside :latest).
 # Bump it when the shipped rules change.
-version: "1.0.0"
+version: "1.1.0"
 sourceUrl: https://github.com/bmoffatt/sbx-rules
-# The rules land in ~/.claude/rules/, which only means something with Claude
-# Code in the sandbox.
-requires: ["claude"]
+# claude   - the rules land in ~/.claude/rules/, and the install hook below
+#            edits Claude Code's settings.json. Depending on claude orders this
+#            kit's hooks after the claude workload's own settings.json seed
+#            (SPEC-v3 lifecycle@1: hooks run in dependency order), so the seed
+#            cannot overwrite the hook registered here.
+# deb/jq   - the install hook merges JSON, and the PreToolUse hook parses its
+#            input with jq.
+requires: ["claude", "deb/jq"]
+capabilities:
+    - type: com.docker.sandbox/lifecycle@1
+      config:
+        install:
+            # Merge, don't overwrite: the sandbox's own settings.json keeps its
+            # keys and any PreToolUse hooks it already has. Idempotent: an
+            # existing entry for this command is replaced, not duplicated. The
+            # script itself ships in the overlay (see sbx-rules.dockerfile) at
+            # ~/.claude/hooks/require-github-banner.sh.
+            - command: |
+                set -e
+                f="$HOME/.claude/settings.json"
+                mkdir -p "$HOME/.claude"
+                [ -s "$f" ] || echo '{}' > "$f"
+                jq --arg cmd '~/.claude/hooks/require-github-banner.sh' '
+                  .hooks.PreToolUse = ((.hooks.PreToolUse // [])
+                    | map(select((.hooks // []) | any(.command == $cmd) | not))
+                    + [{matcher: "Bash", hooks: [{type: "command", command: $cmd}]}])
+                ' "$f" > "$f.tmp"
+                mv "$f.tmp" "$f"
+              user: agent
+              description: Register the GitHub banner PreToolUse hook in Claude settings.json

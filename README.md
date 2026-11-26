@@ -5,6 +5,11 @@ An [sbx](https://docs.docker.com/ai/sandboxes/) (Docker Sandboxes) mixin kit tha
 | Rule | What it does |
 | --- | --- |
 | `collaborative-editing` | Re-read files before editing and prefer small targeted edits, since the user or other agents may be editing the same files concurrently. |
+| `github-banner` | End anything published to GitHub (PR descriptions, comments, review and issue bodies) with the Claude banner. |
+
+## Hooks
+
+`github-banner` is backed by a `PreToolUse` hook (`~/.claude/hooks/require-github-banner.sh`, registered in `settings.json` at create time). It rejects `gh pr|issue create|comment`, `gh pr|issue review|edit` with a body, and `gh api -X POST|PATCH|PUT` calls on comments, reviews, pulls or issues when the text lacks the banner, and tells Claude how to fix it. It does not cover MCP GitHub tools (the rule does), and a `gh pr review --approve` with no body is left alone. The banner text lives in the rule and in the script's `BANNER`; keep them in sync.
 
 It is a [v3 kit](https://github.com/docker/sandbox-kit-spec) (`sbx-rules.yaml` plus `sbx-rules.dockerfile`), so it composes with the v3 `claude` kit and with [`sbx-statusline`](https://github.com/bmoffatt/sbx-statusline), but **not** with v1/v2 kits: sbx rejects a sandbox that mixes the two formats. Use the v3 build of any other kit you add alongside it.
 

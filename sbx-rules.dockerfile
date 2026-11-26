@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-# An overlay carrying the files/home/ tree (the rules under ~/.claude/rules/)
-# onto /home/agent/, path for path.
+# An overlay carrying the files/home/ tree (the rules under ~/.claude/rules/ and
+# the hooks under ~/.claude/hooks/) onto /home/agent/, path for path.
 #
 # Staging stage: copying straight into a scratch stage with
 # `COPY --chown=1000:1000 files/home/ /home/agent/` would make BuildKit chown
@@ -17,7 +17,9 @@
 FROM --platform=$BUILDPLATFORM busybox:1.37 AS stage
 
 COPY files/home/ /out/home/agent/
-RUN chown -R 1000:1000 /out/home/agent
+# The hooks run directly from settings.json, so they need the exec bit; the
+# rules do not.
+RUN chown -R 1000:1000 /out/home/agent && chmod 0755 /out/home/agent/.claude/hooks/*.sh
 
 FROM scratch
 COPY --from=stage /out /

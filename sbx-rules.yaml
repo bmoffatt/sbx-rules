@@ -1,0 +1,12 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+displayName: sbx rules
+description: Claude rules for sandboxes
+kind: mixin
+# The kit's own version: the tag this kit publishes under (alongside :latest).
+# Bump it when the shipped rules change.
+version: "1.0.0"
+sourceUrl: https://github.com/bmoffatt/sbx-rules
+# The rules land in ~/.claude/rules/, which only means something with Claude
+# Code in the sandbox.
+requires: ["claude"]

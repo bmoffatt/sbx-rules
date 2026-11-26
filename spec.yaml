@@ -1,4 +1,0 @@
-schemaVersion: "1"
-kind: mixin
-name: sbx-rules
-description: Claude rules for sandboxes

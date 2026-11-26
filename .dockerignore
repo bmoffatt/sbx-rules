@@ -1,0 +1,5 @@
+# The kit's build context is the repo root. Only files/home/ is copied into the
+# overlay; keep the rest (history, CI, docs) out of the context.
+.git
+.github
+README.md
